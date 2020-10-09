@@ -22,7 +22,7 @@ public class Purchase {
                     income();
                     break;
                 case "2":
-                    purchase();
+                    addPurchase();
                     break;
                 case "3":
                     showList();
@@ -49,7 +49,7 @@ public class Purchase {
         System.out.println();
     }
 
-    private void purchase() {
+    private void addPurchase() {
         input = new Scanner(System.in);
         String product;
         double price;
