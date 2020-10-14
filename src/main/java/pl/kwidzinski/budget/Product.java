@@ -3,10 +3,12 @@ package pl.kwidzinski.budget;
 public class Product {
     private String name;
     private double price;
+    private TypePurchase typePurchase;
 
-    public Product(String name, double price) {
+    public Product(String name, double price, TypePurchase typePurchase) {
         this.name = name;
         this.price = price;
+        this.typePurchase = typePurchase;
     }
 
     public String getName() {
@@ -24,4 +26,9 @@ public class Product {
     public void setPrice(double price) {
         this.price = price;
     }
+
+    public TypePurchase getTypePurchase() {
+        return typePurchase;
+    }
 }
+
