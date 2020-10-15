@@ -1,11 +1,15 @@
 package pl.kwidzinski.budget;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Purchase {
+    private String pathToDirectory = "C:\\NewGitProjects\\Budget-manager-app\\src\\main\\resources\\purchases";
     private double balance = 0;
-    private List<Product> products = new ArrayList<>();
+    private final List<Product> products = new ArrayList<>();
     private Scanner input;
+    private Save save = new Save();
+    private Load load = new Load();
 
     public void showAction() {
         input = new Scanner(System.in);
@@ -16,6 +20,8 @@ public class Purchase {
                     "2) Add purchase\n" +
                     "3) Show list of purchases\n" +
                     "4) Balance\n" +
+                    "5) Save\n" +
+                    "6) Load\n" +
                     "0) Exit");
             numOfAction = input.next();
             System.out.println();
@@ -25,7 +31,7 @@ public class Purchase {
                     income();
                     break;
                 case "2":
-                    showTypePurchase();
+                    addTypePurchase();
                     break;
                 case "3":
                     showListTypePurchase();
@@ -33,12 +39,20 @@ public class Purchase {
                 case "4":
                     balance();
                     break;
+                case "5":
+                    save.saveCategory(pathToDirectory, products);
+                    save.saveBalance(pathToDirectory, balance);
+                    break;
+                case "6":
+                    load.loadCategory(pathToDirectory, products);
+                    balance = load.loadBalance(pathToDirectory);
+                    break;
             }
         } while (!numOfAction.equals("0"));
         System.out.print("Bye!");
     }
 
-    private void showTypePurchase() {
+    private void addTypePurchase() {
         input = new Scanner(System.in);
         String numOfType;
 
@@ -95,19 +109,19 @@ public class Purchase {
             switch (numOfType) {
                 case "1":
                     TypePurchase food = values[0];
-                    showList(food);
+                    showListByType(products, food);
                     break;
                 case "2":
                     TypePurchase clothes = values[1];
-                    showList(clothes);
+                    showListByType(products, clothes);
                     break;
                 case "3":
                     TypePurchase entertainment = values[2];
-                    showList(entertainment);
+                    showListByType(products, entertainment);
                     break;
                 case "4":
                     TypePurchase other = values[3];
-                    showList(other);
+                    showListByType(products, other);
                     break;
                 case "5":
                     showAll();
@@ -132,22 +146,32 @@ public class Purchase {
         System.out.println();
     }
 
-    private void showList(TypePurchase typePurchase) {
+    private List<Product> productsListByType(List<Product> products, TypePurchase typePurchase) {
+        return products.stream()
+                .filter(product -> typePurchase.equals(product.getTypePurchase()))
+                .collect(Collectors.toList());
+    }
+
+    private void showListByType(List<Product> products, TypePurchase typePurchase) {
         double total = 0;
         String toUpperCase = typePurchase.name().substring(0, 1).toUpperCase();
         String toLowerCase = typePurchase.name().substring(1).toLowerCase();
         System.out.println(toUpperCase + toLowerCase + ":");
 
-        for (Product product : products) {
-            if (product.getTypePurchase().name().contains(typePurchase.name())) {
+        List<Product> productList = productsListByType(products, typePurchase);
+
+        for (Product product : productList) {
+            if (productList.isEmpty()) {
+                System.out.println("Purchase list is empty!\n");
+            } else {
                 System.out.println(product.getName() + " $" + product.getPrice());
                 total += product.getPrice();
-            } else if (!product.getTypePurchase().equals(typePurchase)) {
-                System.out.println("Purchase list is empty!\n");
             }
         }
         if (total > 0) {
             System.out.printf("Total sum: $%.2f\n", total);
+        } else {
+            System.err.println("Error, prices must not be negative!");
         }
         System.out.println();
     }

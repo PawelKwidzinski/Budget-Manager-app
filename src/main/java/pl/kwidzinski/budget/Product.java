@@ -30,5 +30,14 @@ public class Product {
     public TypePurchase getTypePurchase() {
         return typePurchase;
     }
+
+    @Override
+    public String toString() {
+        return "Product{" +
+                "name='" + name + '\'' +
+                ", price=" + price +
+                ", typePurchase=" + typePurchase +
+                '}';
+    }
 }
 
