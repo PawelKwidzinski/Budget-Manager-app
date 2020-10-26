@@ -1,15 +1,16 @@
 package pl.kwidzinski.budget;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class Purchase {
     private String pathToDirectory = "C:\\NewGitProjects\\Budget-manager-app\\src\\main\\resources\\purchases";
-    private double balance = 0;
-    private final List<Product> products = new ArrayList<>();
-    private Scanner input;
+    private List<Product> products = new ArrayList<>();
+    private Map<String, Double> purchaseMap = new HashMap<>();
+    private PurchaseUtils purchaseUtils = new PurchaseUtils();
     private Save save = new Save();
     private Load load = new Load();
+    private Scanner input;
+    private double balance = 0;
 
     public void showAction() {
         input = new Scanner(System.in);
@@ -22,6 +23,7 @@ public class Purchase {
                     "4) Balance\n" +
                     "5) Save\n" +
                     "6) Load\n" +
+                    "7) Analyze (Sort)\n" +
                     "0) Exit");
             numOfAction = input.next();
             System.out.println();
@@ -47,6 +49,10 @@ public class Purchase {
                     load.loadCategory(pathToDirectory, products);
                     balance = load.loadBalance(pathToDirectory);
                     break;
+                case "7":
+                    showSortOptions();
+                    break;
+
             }
         } while (!numOfAction.equals("0"));
         System.out.print("Bye!");
@@ -66,24 +72,18 @@ public class Purchase {
 
             numOfType = input.nextLine();
 
-            TypePurchase[] values = TypePurchase.values();
-
             switch (numOfType) {
                 case "1":
-                    TypePurchase food = values[0];
-                    purchase(food);
+                    purchase(TypePurchase.FOOD);
                     break;
                 case "2":
-                    TypePurchase clothes = values[1];
-                    purchase(clothes);
+                    purchase(TypePurchase.CLOTHES);
                     break;
                 case "3":
-                    TypePurchase entertainment = values[2];
-                    purchase(entertainment);
+                    purchase(TypePurchase.ENTERTAINMENT);
                     break;
                 case "4":
-                    TypePurchase other = values[3];
-                    purchase(other);
+                    purchase(TypePurchase.OTHER);
                     break;
             }
         } while (!numOfType.equals("5"));
@@ -104,76 +104,114 @@ public class Purchase {
 
             numOfType = input.nextLine();
 
-            TypePurchase[] values = TypePurchase.values();
-
             switch (numOfType) {
                 case "1":
-                    TypePurchase food = values[0];
-                    showListByType(products, food);
+                    purchaseUtils.showProductsAndPriceByType(products, TypePurchase.FOOD);
                     break;
                 case "2":
-                    TypePurchase clothes = values[1];
-                    showListByType(products, clothes);
+                    purchaseUtils.showProductsAndPriceByType(products, TypePurchase.CLOTHES);
                     break;
                 case "3":
-                    TypePurchase entertainment = values[2];
-                    showListByType(products, entertainment);
+                    purchaseUtils.showProductsAndPriceByType(products, TypePurchase.ENTERTAINMENT);
                     break;
                 case "4":
-                    TypePurchase other = values[3];
-                    showListByType(products, other);
+                    purchaseUtils.showProductsAndPriceByType(products, TypePurchase.OTHER);
                     break;
                 case "5":
-                    showAll();
+                    if (products.isEmpty()) {
+                        System.out.println("\nPurchase list is empty!\n");
+                    } else {
+                        System.out.println("All:");
+                        purchaseUtils.showProductsAndPrice(products);
+                    }
                     break;
             }
         } while (!numOfType.equals("6"));
         System.out.println();
     }
 
-    private void showAll() {
-        double total = 0;
-        if (products.isEmpty()) {
-            System.out.println("Purchase list is empty!\n");
-        } else {
-            System.out.println("All:");
-            for (Product product : products) {
-                System.out.println(product.getName() + " $" + product.getPrice());
-                total += product.getPrice();
+    private void showSortOptions() {
+        input = new Scanner(System.in);
+        String numOfType;
+
+        do {
+            System.out.println("How do you want to sort?\n" +
+                    "1) Sort all purchases\n" +
+                    "2) Sort by type\n" +
+                    "3) Sort certain type\n" +
+                    "4) Back");
+
+            numOfType = input.nextLine();
+            switch (numOfType) {
+                case "1":
+                    if (products.isEmpty()) {
+                        System.out.println("\nPurchase list is empty!\n");
+                    } else {
+                        purchaseUtils.sortAllPurchaseByPrice(products);
+                        System.out.println("All:");
+                        purchaseUtils.showProductsAndPrice(products);
+                    }
+                    break;
+                case "2":
+                    putTypePurchaseWithTotalPrice(TypePurchase.FOOD, products);
+                    putTypePurchaseWithTotalPrice(TypePurchase.CLOTHES, products);
+                    putTypePurchaseWithTotalPrice(TypePurchase.ENTERTAINMENT, products);
+                    putTypePurchaseWithTotalPrice(TypePurchase.OTHER, products);
+                    Map<String, Double> sortedMap = purchaseUtils.sortMapByValue(purchaseMap);
+                    purchaseUtils.printMap(sortedMap);
+                    break;
+                case "3":
+                    sortByCertainType();
+                    break;
             }
-            System.out.printf("Total sum: $%.2f\n", total);
-        }
+        } while (!numOfType.equals("4"));
         System.out.println();
     }
 
-    private List<Product> productsListByType(List<Product> products, TypePurchase typePurchase) {
-        return products.stream()
-                .filter(product -> typePurchase.equals(product.getTypePurchase()))
-                .collect(Collectors.toList());
-    }
+    private void putTypePurchaseWithTotalPrice(TypePurchase typePurchase, List<Product> products) {
+        String type = purchaseUtils.getString(typePurchase);
 
-    private void showListByType(List<Product> products, TypePurchase typePurchase) {
+        List<Product> productList = purchaseUtils.productsListByType(products, typePurchase);
         double total = 0;
-        String toUpperCase = typePurchase.name().substring(0, 1).toUpperCase();
-        String toLowerCase = typePurchase.name().substring(1).toLowerCase();
-        System.out.println(toUpperCase + toLowerCase + ":");
-
-        List<Product> productList = productsListByType(products, typePurchase);
-
         for (Product product : productList) {
-            if (productList.isEmpty()) {
-                System.out.println("Purchase list is empty!\n");
-            } else {
-                System.out.println(product.getName() + " $" + product.getPrice());
-                total += product.getPrice();
+            total += product.getPrice();
+        }
+        purchaseMap.put(type, total);
+    }
+
+    private void sortByCertainType() {
+        input = new Scanner(System.in);
+        String numOfType;
+
+        boolean work = true;
+        while (work) {
+            System.out.println("\nChoose the type of purchase\n" +
+                    "1) Food\n" +
+                    "2) Clothes\n" +
+                    "3) Entertainment\n" +
+                    "4) Other");
+
+            numOfType = input.nextLine();
+
+            switch (numOfType) {
+                case "1":
+                    purchaseUtils.showProductsAndPriceByType(products, TypePurchase.FOOD);
+                    work = false;
+                    break;
+                case "2":
+                    purchaseUtils.showProductsAndPriceByType(products, TypePurchase.CLOTHES);
+                    work = false;
+                    break;
+                case "3":
+                    purchaseUtils.showProductsAndPriceByType(products, TypePurchase.ENTERTAINMENT);
+                    work = false;
+                    break;
+                case "4":
+                    purchaseUtils.showProductsAndPriceByType(products, TypePurchase.OTHER);
+                    work = false;
+                    break;
             }
         }
-        if (total > 0) {
-            System.out.printf("Total sum: $%.2f\n", total);
-        } else {
-            System.err.println("Error, prices must not be negative!");
-        }
-        System.out.println();
     }
 
     private void purchase(TypePurchase typePurchase) {
@@ -181,7 +219,7 @@ public class Purchase {
         String product;
         double price;
 
-        System.out.print("Enter purchase name:\n");
+        System.out.print("\nEnter purchase name:\n");
         product = input.nextLine();
 
         System.out.print("Enter its price:\n");
